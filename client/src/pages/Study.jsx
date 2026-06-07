@@ -102,10 +102,10 @@ export default function Study() {
   return (
     <Layout>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">Study Session</h1>
-        <p className="text-slate-500 mb-8">Enter a topic to generate AI-powered study materials</p>
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Study Session</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-8">Enter a topic to generate AI-powered study materials</p>
 
-        <form onSubmit={handleStart} className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
+        <form onSubmit={handleStart} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 mb-8 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -114,7 +114,7 @@ export default function Study() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. Binary Search, Photosynthesis, French Revolution..."
-                className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-12 pr-4 py-3 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent dark:text-slate-100"
                 disabled={loading}
               />
             </div>
@@ -130,7 +130,7 @@ export default function Study() {
                   className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     difficulty === d.value
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
                   {d.label}
@@ -149,7 +149,7 @@ export default function Study() {
         </form>
 
         {(generating || changingDifficulty) && (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 mb-8 shadow-sm animate-pulse">
             <NotesSkeleton />
           </div>
         )}
@@ -158,14 +158,14 @@ export default function Study() {
           <div className="space-y-8">
             <PomodoroTimer />
 
-            <div className="bg-white rounded-xl border border-slate-200 p-8">
-              <h2 className="text-2xl font-bold text-slate-800 mb-6 capitalize">{session.topic}</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 capitalize">{session.topic}</h2>
               <MarkdownRenderer content={session.notes} />
             </div>
 
             {session.videos?.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-slate-800 mb-4">Recommended Videos</h2>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Recommended Videos</h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {session.videos.map((video) => (
                     <VideoCard key={video.videoId} video={video} onClick={setSelectedVideo} />
@@ -176,7 +176,7 @@ export default function Study() {
 
             {session.isCodingTopic && session.leetcodeQuestions?.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-slate-800 mb-4">LeetCode Practice</h2>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">LeetCode Practice</h2>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {session.leetcodeQuestions.map((q) => (
                     <LeetCodeCard key={q.titleSlug} question={q} />
@@ -195,7 +195,7 @@ export default function Study() {
               <button
                 onClick={handleTakeQuiz}
                 disabled={quizLoading}
-                className="px-8 py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200"
+                className="px-8 py-4 bg-indigo-600 text-white rounded-xl font-semibold text-lg hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none"
               >
                 {quizLoading ? 'Preparing Quiz...' : 'Take Quiz'}
               </button>

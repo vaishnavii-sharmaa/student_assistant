@@ -4,9 +4,9 @@ export default function VideoCard({ video, onClick }) {
   return (
     <button
       onClick={() => onClick(video)}
-      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all text-left group"
+      className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-800 transition-all text-left group"
     >
-      <div className="relative aspect-video bg-slate-100">
+      <div className="relative aspect-video bg-slate-105 dark:bg-slate-950">
         <img
           src={video.thumbnail}
           alt={video.title}
@@ -23,8 +23,8 @@ export default function VideoCard({ video, onClick }) {
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-medium text-sm line-clamp-2 text-slate-800">{video.title}</h3>
-        <p className="text-xs text-slate-500 mt-1">{video.channel}</p>
+        <h3 className="font-medium text-sm line-clamp-2 text-slate-800 dark:text-slate-200">{video.title}</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{video.channel}</p>
       </div>
     </button>
   );

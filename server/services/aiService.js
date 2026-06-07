@@ -208,3 +208,29 @@ ${notes.slice(0, 6000)}`,
 
   return chat(messages);
 }
+
+export async function summarizeContent(content, style = 'detailed') {
+  const stylePrompts = {
+    bullet: 'Create a structured summary using bullet points emphasizing the key facts, formulas, or concepts. Avoid verbose descriptions.',
+    paragraph: 'Create a concise summary in a single cohesive paragraph. Capture the essence of the text.',
+    detailed: 'Create comprehensive study notes/summary with sections like: Overview, Key Takeaways, Definitions of Important Terms, and a detailed Summary.'
+  };
+
+  const prompt = stylePrompts[style] || stylePrompts.detailed;
+
+  const result = await chat([
+    {
+      role: 'system',
+      content: `You are an expert educational summarizer. Generate a high-quality summary in Markdown format.
+Use headings (##, ###), bullet points, and bold text for key terms.
+${prompt}`,
+    },
+    {
+      role: 'user',
+      content: `Summarize the following content:\n\n${content.slice(0, 10000)}`,
+    },
+  ]);
+
+  return result;
+}
+

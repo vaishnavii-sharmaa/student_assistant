@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import studyRoutes from './routes/study.js';
 import quizRoutes from './routes/quiz.js';
 import dashboardRoutes from './routes/dashboard.js';
+import notificationRoutes from './routes/notifications.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Student Assistant API is running' });
