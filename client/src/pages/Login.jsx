@@ -38,33 +38,33 @@ export default function Login() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 w-full max-w-md border border-transparent dark:border-slate-800"
       >
         <div className="flex items-center gap-3 mb-8">
           <BookOpen className="w-8 h-8 text-indigo-600" />
-          <h1 className="text-2xl font-bold text-slate-800">Sign In</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Sign In</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 caret-indigo-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 caret-indigo-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="••••••••"
             />
           </div>
@@ -77,7 +77,7 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
           Don&apos;t have an account?{' '}
           <Link to="/register" className="text-indigo-600 hover:underline font-medium">
             Register

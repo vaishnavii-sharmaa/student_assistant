@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
       graduationYear: { type: String, default: '' },
       gpa: { type: String, default: '' }
     },
-    theme: { type: String, default: 'light' },
+    theme: { type: String, default: 'dark' },
     notificationPreferences: {
       quizReminders: { type: Boolean, default: true },
       upcomingExams: { type: Boolean, default: true },
