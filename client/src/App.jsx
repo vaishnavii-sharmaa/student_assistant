@@ -19,7 +19,7 @@ function ThemeSync() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const theme = user?.theme || localStorage.getItem('theme') || 'light';
+    const theme = user?.theme || localStorage.getItem('theme') || 'dark';
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

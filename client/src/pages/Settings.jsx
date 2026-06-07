@@ -70,7 +70,7 @@ export default function Settings() {
   const [gpa, setGpa] = useState(user?.academicDetails?.gpa || '');
 
   // Theme & Notifications
-  const [theme, setTheme] = useState(user?.theme || 'light');
+  const [theme, setTheme] = useState(user?.theme || 'dark');
   const [quizReminders, setQuizReminders] = useState(
     user?.notificationPreferences?.quizReminders !== false
   );

@@ -32,7 +32,17 @@ export function AuthProvider({ children }) {
 
   const loginUser = (data) => {
     localStorage.setItem('token', data.token);
-    const userData = { _id: data._id, name: data.name, email: data.email };
+    const userData = {
+      _id: data._id,
+      name: data.name,
+      email: data.email,
+      address: data.address,
+      github: data.github,
+      linkedin: data.linkedin,
+      academicDetails: data.academicDetails,
+      theme: data.theme,
+      notificationPreferences: data.notificationPreferences,
+    };
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
