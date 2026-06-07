@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './hooks/useAuth';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -10,10 +11,29 @@ import Quiz from './pages/Quiz';
 import Results from './pages/Results';
 import Flashcards from './pages/Flashcards';
 import Dashboard from './pages/Dashboard';
+import Notifications from './pages/Notifications';
+import Settings from './pages/Settings';
+import Summary from './pages/Summary';
+
+function ThemeSync() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const theme = user?.theme || localStorage.getItem('theme') || 'light';
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [user?.theme]);
+
+  return null;
+}
 
 export default function App() {
   return (
     <AuthProvider>
+      <ThemeSync />
       <BrowserRouter>
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         <Routes>
@@ -33,6 +53,30 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/summary"
+            element={
+              <ProtectedRoute>
+                <Summary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

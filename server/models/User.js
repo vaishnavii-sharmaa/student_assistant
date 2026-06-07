@@ -7,6 +7,21 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
     studyDates: [{ type: Date }],
+    address: { type: String, default: '' },
+    github: { type: String, default: '' },
+    linkedin: { type: String, default: '' },
+    academicDetails: {
+      college: { type: String, default: '' },
+      major: { type: String, default: '' },
+      graduationYear: { type: String, default: '' },
+      gpa: { type: String, default: '' }
+    },
+    theme: { type: String, default: 'light' },
+    notificationPreferences: {
+      quizReminders: { type: Boolean, default: true },
+      upcomingExams: { type: Boolean, default: true },
+      studyStreakAlerts: { type: Boolean, default: true }
+    }
   },
   { timestamps: true }
 );

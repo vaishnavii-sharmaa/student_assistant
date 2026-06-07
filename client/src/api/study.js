@@ -11,3 +11,10 @@ export const generateQuiz = (sessionId) => api.post(`/study/sessions/${sessionId
 export const submitQuiz = (sessionId, data) => api.post(`/study/sessions/${sessionId}/quiz/submit`, data);
 export const getQuiz = (sessionId) => api.get(`/quiz/${sessionId}`);
 export const getFlashcards = (sessionId) => api.get(`/study/sessions/${sessionId}/flashcards`);
+export const getSessions = () => api.get('/study/sessions');
+export const deleteSession = (sessionId) => api.delete(`/study/sessions/${sessionId}`);
+export const updateSessionNotes = (sessionId, notes) =>
+  api.patch(`/study/sessions/${sessionId}/notes`, { notes });
+export const summarizeCustomContent = (data) => api.post('/study/sessions/summarize', data);
+export const saveCustomSummary = (data) => api.post('/study/sessions/save-summary', data);
+

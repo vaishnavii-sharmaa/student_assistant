@@ -1,5 +1,6 @@
 import Session from '../models/Session.js';
 import User from '../models/User.js';
+import axios from 'axios';
 import {
   generateNotes,
   detectCodingTopic,
@@ -8,6 +9,7 @@ import {
   generateRoadmap,
   generateFlashcards,
   chatAboutTopic,
+  summarizeContent,
 } from '../services/aiService.js';
 import { searchVideos } from '../services/youtubeService.js';
 import { searchProblems } from '../services/leetcodeService.js';
@@ -209,3 +211,133 @@ export const getFlashcards = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getSessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .select('topic difficulty notes isCodingTopic status createdAt');
+    res.json(sessions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+function extractTextFromHtml(html) {
+  // Remove script and style tags, comments
+  let text = html
+    .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '')
+    .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, '')
+    .replace(/<!--([\s\S]*?)-->/g, '');
+  
+  // Extract text content from tags
+  text = text.replace(/<\/?[^>]+(>|$)/g, ' ');
+  
+  // Decode HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+
+  // Normalize spaces
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+export const deleteSession = async (req, res) => {
+  try {
+    const session = await Session.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.json({ message: 'Session deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateSessionNotes = async (req, res) => {
+  try {
+    const { notes } = req.body;
+    if (notes === undefined) {
+      return res.status(400).json({ message: 'Notes field is required' });
+    }
+    const session = await Session.findOne({ _id: req.params.id, user: req.user._id });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    session.notes = notes;
+    await session.save();
+    res.json(session);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const summarizeCustomContent = async (req, res) => {
+  try {
+    const { text, url, style = 'detailed' } = req.body;
+    let contentToSummarize = '';
+
+    if (url) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return res.status(400).json({ message: 'Invalid URL format. Must start with http:// or https://' });
+      }
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+          },
+          timeout: 8000,
+        });
+        contentToSummarize = extractTextFromHtml(response.data);
+        if (!contentToSummarize) {
+          return res.status(400).json({ message: 'Could not extract text from the provided URL' });
+        }
+      } catch (err) {
+        console.error('Failed to fetch URL:', err);
+        return res.status(400).json({ message: `Failed to fetch website content: ${err.message}` });
+      }
+    } else if (text) {
+      contentToSummarize = text.trim();
+    }
+
+    if (!contentToSummarize) {
+      return res.status(400).json({ message: 'No content provided to summarize' });
+    }
+
+    const summary = await summarizeContent(contentToSummarize, style);
+    res.json({ summary });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const saveCustomSummary = async (req, res) => {
+  try {
+    const { topic, notes } = req.body;
+    if (!topic?.trim() || !notes?.trim()) {
+      return res.status(400).json({ message: 'Topic and notes are required' });
+    }
+
+    // Generate flashcards from notes using aiService
+    let flashcards = [];
+    try {
+      flashcards = await generateFlashcards(notes, topic);
+    } catch (err) {
+      console.warn('Failed to auto-generate flashcards for custom summary:', err.message);
+    }
+
+    const session = await Session.create({
+      user: req.user._id,
+      topic: topic.trim(),
+      notes: notes.trim(),
+      flashcards,
+      status: 'completed',
+    });
+
+    res.status(201).json(session);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

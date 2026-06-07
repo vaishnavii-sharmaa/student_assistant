@@ -66,10 +66,10 @@ export default function PomodoroTimer() {
   const secs = timeLeft % 60;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex items-center gap-4 shadow-sm">
       <div className="relative w-24 h-24 flex-shrink-0">
         <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+          <circle cx="50" cy="50" r="45" fill="none" strokeWidth="6" className="stroke-slate-200 dark:stroke-slate-800" />
           <circle
             cx="50"
             cy="50"
@@ -84,16 +84,16 @@ export default function PomodoroTimer() {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-bold text-slate-800">
+          <span className="text-lg font-bold text-slate-800 dark:text-white">
             {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
           </span>
-          <span className="text-xs text-slate-500 capitalize">{mode}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{mode}</span>
         </div>
       </div>
 
       <div className="flex-1">
-        <p className="text-sm font-medium text-slate-700">Pomodoro Timer</p>
-        <p className="text-xs text-slate-500 mb-2">25 min study · 5 min break</p>
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Pomodoro Timer</p>
+        <p className="text-xs text-slate-500 dark:text-slate-450 mb-2">25 min study · 5 min break</p>
         <div className="flex gap-2">
           <button
             onClick={toggle}
@@ -104,7 +104,7 @@ export default function PomodoroTimer() {
           </button>
           <button
             onClick={reset}
-            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200"
+            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350 text-sm rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
           >
             <RotateCcw className="w-4 h-4" />
             Reset
