@@ -1,5 +1,6 @@
 import Session from '../models/Session.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import axios from 'axios';
 import {
   generateNotes,
@@ -48,22 +49,30 @@ export const generateSessionContent = async (req, res) => {
     const session = await Session.findOne({ _id: req.params.id, user: req.user._id });
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    const [notes, isCoding, videos] = await Promise.all([
+    const isCodingTopicFlag = await detectCodingTopic(session.topic);
+
+    const [notes, videos, leetcodeQuestions] = await Promise.all([
       generateNotes(session.topic, session.difficulty),
-      detectCodingTopic(session.topic),
       searchVideos(session.topic),
+      isCodingTopicFlag ? searchProblems(session.topic) : Promise.resolve([]),
     ]);
 
-    let leetcodeQuestions = [];
-    if (isCoding) {
-      leetcodeQuestions = await searchProblems(session.topic);
-    }
-
     session.notes = notes;
-    session.isCodingTopic = isCoding;
+    session.isCodingTopic = isCodingTopicFlag;
     session.videos = videos;
     session.leetcodeQuestions = leetcodeQuestions;
     await session.save();
+
+    try {
+      await Notification.create({
+        user: req.user._id,
+        title: `📝 Notes Generated: ${session.topic}`,
+        message: `Your AI study notes for "${session.topic}" have been generated with ${session.difficulty} level difficulty.`,
+        type: 'quiz',
+      });
+    } catch (err) {
+      console.error('Failed to create session notification:', err);
+    }
 
     recordStudyDate(req.user._id);
 
@@ -164,17 +173,11 @@ export const submitQuiz = async (req, res) => {
       if (answers[i] === q.correctIndex) score++;
     });
 
-    const analysis = await generateAnalysis(
-      session.topic,
-      session.notes,
-      questions,
-      answers,
-      score,
-      timeTaken || 0
-    );
-
+    const [analysis, flashcards] = await Promise.all([
+      generateAnalysis(session.topic, session.notes, questions, answers, score, timeTaken || 0),
+      generateFlashcards(session.notes, session.topic),
+    ]);
     const roadmap = await generateRoadmap(session.topic, session.notes, analysis.weakAreas);
-    const flashcards = await generateFlashcards(session.notes, session.topic);
 
     session.quizAnswers = answers;
     session.quizScore = score;
@@ -185,6 +188,17 @@ export const submitQuiz = async (req, res) => {
     session.flashcards = flashcards;
     session.status = 'completed';
     await session.save();
+
+    try {
+      await Notification.create({
+        user: req.user._id,
+        title: `🏆 Quiz Completed: ${session.topic}`,
+        message: `You completed the quiz for "${session.topic}" scoring ${score}/${questions.length} (${Math.round((score / questions.length) * 100)}%).`,
+        type: 'quiz',
+      });
+    } catch (err) {
+      console.error('Failed to create quiz completion notification:', err);
+    }
 
     recordStudyDate(req.user._id);
 
@@ -335,9 +349,38 @@ export const saveCustomSummary = async (req, res) => {
       status: 'completed',
     });
 
+    try {
+      await Notification.create({
+        user: req.user._id,
+        title: `📌 Summary Saved: ${topic}`,
+        message: `A custom summary for "${topic}" has been saved in your Summary Hub.`,
+        type: 'exam',
+      });
+    } catch (err) {
+      console.error('Failed to create custom summary notification:', err);
+    }
+
     res.status(201).json(session);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+export const saveMarkedLine = async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text?.trim()) {
+      return res.status(400).json({ message: 'Marked text is required' });
+    }
+
+    const session = await Session.findOne({ _id: req.params.id, user: req.user._id });
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    session.markedLines.push(text.trim());
+    await session.save();
+
+    res.json({ markedLines: session.markedLines });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

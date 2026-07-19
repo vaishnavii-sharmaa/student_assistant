@@ -71,6 +71,7 @@ const sessionSchema = new mongoose.Schema(
     chatHistory: [chatMessageSchema],
     flashcards: [flashcardSchema],
     status: { type: String, enum: ['notes', 'quiz', 'completed'], default: 'notes' },
+    markedLines: [String],
   },
   { timestamps: true }
 );

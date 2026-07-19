@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { updateProfile } from '../api/auth';
 import Layout from '../components/Layout';
@@ -53,12 +54,13 @@ const LinkedinIcon = (props) => (
 
 export default function Settings() {
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'profile';
   const [isLoading, setIsLoading] = useState(false);
 
   // Profile fields
   const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [email] = useState(user?.email || '');
   const [address, setAddress] = useState(user?.address || '');
   const [github, setGithub] = useState(user?.github || '');
   const [linkedin, setLinkedin] = useState(user?.linkedin || '');
@@ -175,16 +177,16 @@ export default function Settings() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-          {/* Navigation Sidebar */}
-          <div className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 scrollbar-none border-b md:border-b-0 border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col gap-6 items-start w-full">
+          {/* Mobile-only Navigation Sidebar */}
+          <div className="md:hidden flex gap-2 overflow-x-auto pb-4 scrollbar-none border-b border-slate-200 dark:border-slate-800 w-full">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setSearchParams({ tab: tab.id })}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-sm whitespace-nowrap cursor-pointer ${
                     isActive
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none'
@@ -199,7 +201,7 @@ export default function Settings() {
           </div>
 
           {/* Content Pane */}
-          <div className="md:col-span-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl p-6 md:p-8">
+          <div className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl p-6 md:p-8">
             <form onSubmit={handleUpdateProfile}>
               <AnimatePresence mode="wait">
                 <motion.div

@@ -1,8 +1,25 @@
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+const buildUserResponse = (user, token) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  address: user.address,
+  github: user.github,
+  linkedin: user.linkedin,
+  academicDetails: user.academicDetails,
+  theme: user.theme,
+  photo: user.photo,
+  notificationPreferences: user.notificationPreferences,
+  ...(token ? { token } : {}),
+});
 
 export const register = async (req, res) => {
   try {
@@ -32,6 +49,7 @@ export const register = async (req, res) => {
       linkedin: user.linkedin,
       academicDetails: user.academicDetails,
       theme: user.theme,
+      photo: user.photo,
       notificationPreferences: user.notificationPreferences,
       token: generateToken(user._id),
     });
@@ -62,6 +80,7 @@ export const login = async (req, res) => {
       linkedin: user.linkedin,
       academicDetails: user.academicDetails,
       theme: user.theme,
+      photo: user.photo,
       notificationPreferences: user.notificationPreferences,
       token: generateToken(user._id),
     });
@@ -80,6 +99,7 @@ export const getMe = async (req, res) => {
     linkedin: req.user.linkedin,
     academicDetails: req.user.academicDetails,
     theme: req.user.theme,
+    photo: req.user.photo,
     notificationPreferences: req.user.notificationPreferences,
   });
 };
@@ -100,6 +120,7 @@ export const updateProfile = async (req, res) => {
       linkedin,
       academicDetails,
       theme,
+      photo,
       notificationPreferences,
       currentPassword,
       newPassword,
@@ -119,6 +140,7 @@ export const updateProfile = async (req, res) => {
     if (linkedin !== undefined) user.linkedin = linkedin;
     if (academicDetails !== undefined) user.academicDetails = academicDetails;
     if (theme !== undefined) user.theme = theme;
+    if (photo !== undefined) user.photo = photo;
     if (notificationPreferences !== undefined) user.notificationPreferences = notificationPreferences;
 
     if (newPassword) {
@@ -146,9 +168,56 @@ export const updateProfile = async (req, res) => {
       linkedin: updatedUser.linkedin,
       academicDetails: updatedUser.academicDetails,
       theme: updatedUser.theme,
+      photo: updatedUser.photo,
       notificationPreferences: updatedUser.notificationPreferences,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential token is required' });
+    }
+
+    // Verify the Google ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Could not retrieve email from Google account' });
+    }
+
+    // Find existing user by googleId or email
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      // Link googleId if they previously signed up with email/password
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
+      // Create new user from Google profile
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        photo: picture || '',
+        password: null,
+      });
+    }
+
+    res.json(buildUserResponse(user, generateToken(user._id)));
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ message: 'Google authentication failed. Please try again.' });
   }
 };

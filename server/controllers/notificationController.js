@@ -4,37 +4,7 @@ export const getNotifications = async (req, res) => {
   try {
     let notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 });
 
-    // Seed mock data if user has no notifications
-    if (notifications.length === 0) {
-      const mockNotifications = [
-        {
-          user: req.user._id,
-          title: '🔥 Keep the streak alive!',
-          message: 'Complete a study session today to maintain your learning streak.',
-          type: 'streak',
-          read: false,
-        },
-        {
-          user: req.user._id,
-          title: '📝 Ready for your next quiz?',
-          message: 'Take a quick quiz to check your understanding of your recent topics.',
-          type: 'quiz',
-          read: false,
-        },
-        {
-          user: req.user._id,
-          title: '📅 Mathematics Midterm Exam',
-          message: 'Don\'t forget to study for your upcoming math examination scheduled soon.',
-          type: 'exam',
-          read: false,
-          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-        },
-      ];
-
-      notifications = await Notification.insertMany(mockNotifications);
-      // Sort newly inserted
-      notifications.sort((a, b) => b.createdAt - a.createdAt);
-    }
+    // Return notifications (empty array if none exist)
 
     res.json(notifications);
   } catch (error) {

@@ -11,6 +11,7 @@ import { formatDate, getRemarkColor } from '../utils/helpers';
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     getDashboard()
@@ -29,11 +30,13 @@ export default function Dashboard() {
     );
   }
 
+  const visibleSessions = showAll ? data.sessions : data.sessions.slice(0, 10);
+
   return (
     <Layout>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Study Dashboard</h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-8">Track your learning progress over time</p>
+        <p className="text-slate-505 dark:text-slate-400 mb-8">Track your learning progress over time</p>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
@@ -43,7 +46,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800 dark:text-white">{data.streak}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-450">Day Streak</p>
+                <p className="text-sm text-slate-505 dark:text-slate-450">Day Streak</p>
               </div>
             </div>
           </div>
@@ -54,7 +57,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800 dark:text-white">{data.totalSessions}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-450">Total Sessions</p>
+                <p className="text-sm text-slate-505 dark:text-slate-450">Total Sessions</p>
               </div>
             </div>
           </div>
@@ -69,7 +72,7 @@ export default function Dashboard() {
                     ? Math.round(data.scoreTrend.reduce((a, b) => a + b.score, 0) / data.scoreTrend.length)
                     : 0}%
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-450">Avg Score</p>
+                <p className="text-sm text-slate-505 dark:text-slate-450">Avg Score</p>
               </div>
             </div>
           </div>
@@ -124,7 +127,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.sessions.map((s) => (
+                  {visibleSessions.map((s) => (
                     <tr key={s._id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="py-3 px-2 font-medium text-slate-800 dark:text-slate-200 capitalize">{s.topic}</td>
                       <td className="py-3 px-2 text-slate-500 dark:text-slate-400 capitalize">{s.difficulty}</td>
@@ -143,16 +146,27 @@ export default function Dashboard() {
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border dark:border-emerald-900/40'
                             : s.status === 'quiz'
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border dark:border-amber-900/40'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-350 dark:border dark:border-slate-700'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-355 dark:border dark:border-slate-700'
                         }`}>
                           {s.status}
                         </span>
                       </td>
-                      <td className="py-3 px-2 text-slate-500 dark:text-slate-400">{formatDate(s.date)}</td>
+                      <td className="py-3 px-2 text-slate-505 dark:text-slate-400">{formatDate(s.date)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {data.sessions.length > 10 && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setShowAll(!showAll)}
+                    className="px-5 py-2 border border-slate-250 dark:border-slate-800 rounded-xl text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer shadow-xs"
+                  >
+                    {showAll ? 'View Less' : `View More (${data.sessions.length - 10} more)`}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

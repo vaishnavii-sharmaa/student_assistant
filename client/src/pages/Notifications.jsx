@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getNotifications, createNotification, markAsRead, deleteNotification } from '../api/notifications';
 import Layout from '../components/Layout';
 import { toast } from 'react-hot-toast';
@@ -12,17 +13,16 @@ import {
   Flame,
   FileText,
   Plus,
-  X,
   Loader2,
-  AlertTriangle,
   Sparkles,
 } from 'lucide-react';
 
 export default function Notifications() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'list';
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form states for custom reminder
   const [title, setTitle] = useState('');
@@ -105,12 +105,12 @@ export default function Notifications() {
       setNotifications((prev) => [data, ...prev]);
       toast.success('Custom reminder created successfully!');
       
-      // Reset form & close modal
+      // Reset form & change active tab back to list
       setTitle('');
       setMessage('');
       setType('exam');
       setDueDate('');
-      setIsModalOpen(false);
+      setActiveTab('list');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create reminder');
     } finally {
@@ -150,29 +150,38 @@ export default function Notifications() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        {/* Page Header and Sub-tabs */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
-              <Bell className="w-7 h-7 text-indigo-500" />
+            <h1 className="text-3xl font-extrabold flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-accent">
+              <Bell className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               Notifications
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-slate-505 dark:text-slate-400 mt-1">
               Stay on top of your study schedule, pending quizzes, exam reminders, and streaks.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Mobile-only Tab Toggles */}
+          <div className="md:hidden flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex-shrink-0 self-start md:self-auto w-full max-w-sm">
             <button
-              onClick={handleMarkAllAsRead}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-medium text-sm transition-all flex items-center gap-2 cursor-pointer"
+              onClick={() => setSearchParams({ tab: 'list' })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                activeTab === 'list'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
             >
-              <CheckCheck className="w-4 h-4 text-slate-500" />
-              Mark all read
+              <Bell className="w-4 h-4" />
+              Alert Center
             </button>
-
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm shadow-md shadow-indigo-100 dark:shadow-none transition-all flex items-center gap-2 cursor-pointer"
+              onClick={() => setSearchParams({ tab: 'create' })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                activeTab === 'create'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
             >
               <Plus className="w-4 h-4" />
               Add Reminder
@@ -180,259 +189,251 @@ export default function Notifications() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
-              filter === 'all'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            All Alerts ({notifications.length})
-          </button>
-          <button
-            onClick={() => setFilter('unread')}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
-              filter === 'unread'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            Unread ({notifications.filter((n) => !n.read).length})
-          </button>
-        </div>
-
-        {/* Notifications List */}
-        <div className="space-y-3.5">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-              <p className="text-slate-500 text-sm">Loading your reminders...</p>
-            </div>
-          ) : filteredNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-slate-100 dark:border-slate-800/60 rounded-2xl">
-              <Bell className="w-12 h-12 text-slate-350 dark:text-slate-650 mb-3" />
-              <p className="text-slate-700 dark:text-slate-300 font-semibold text-lg">No alerts found</p>
-              <p className="text-slate-500 text-sm max-w-sm mt-1">
-                You do not have any notifications in this section. Create a reminder or complete a study session.
-              </p>
-            </div>
-          ) : (
-            <AnimatePresence initial={false}>
-              {filteredNotifications.map((notification) => (
-                <motion.div
-                  key={notification._id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className={`flex gap-4 p-4 rounded-2xl border transition-all ${
-                    notification.read
-                      ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-850/60 opacity-75'
-                      : 'bg-indigo-50/15 dark:bg-indigo-950/5 border-indigo-100/65 dark:border-indigo-900/30 ring-1 ring-indigo-500/5'
+        {/* Tab contents */}
+        {activeTab === 'list' ? (
+          <div>
+            {/* Header controls for alerts list */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              {/* Filters */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                    filter === 'all'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                   }`}
                 >
-                  <div className={`p-3 rounded-xl flex-shrink-0 self-start ${getBgClass(notification.type)}`}>
-                    {getIcon(notification.type)}
-                  </div>
+                  All Alerts ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setFilter('unread')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                    filter === 'unread'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  Unread ({notifications.filter((n) => !n.read).length})
+                </button>
+              </div>
 
-                  <div className="flex-grow min-w-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className={`font-semibold text-sm sm:text-base truncate ${
-                        notification.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-900 dark:text-white'
-                      }`}>
-                        {notification.title}
-                      </h3>
-                      {!notification.read && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 self-center" />
-                      )}
-                    </div>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm mt-1 leading-relaxed">
-                      {notification.message}
-                    </p>
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+                >
+                  <CheckCheck className="w-4 h-4 text-slate-505" />
+                  Mark all read
+                </button>
+              )}
+            </div>
 
-                    {/* Metadata (due dates, dates) */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-slate-450 dark:text-slate-500 font-medium">
-                      <span>
-                        Received: {new Date(notification.createdAt).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      {notification.dueDate && (
-                        <span className="flex items-center gap-1 text-rose-500 dark:text-rose-450">
-                          <Calendar className="w-3.5 h-3.5" />
-                          Due: {new Date(notification.dueDate).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-1.5 self-center">
-                    <button
-                      onClick={() => handleMarkAsRead(notification._id, notification.read)}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${
+            {/* Notifications List */}
+            <div className="space-y-3.5">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                  <p className="text-slate-550 text-sm">Loading your reminders...</p>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-slate-205 dark:border-slate-800/60 rounded-2xl bg-white dark:bg-slate-900/40">
+                  <Bell className="w-12 h-12 text-slate-350 dark:text-slate-650 mb-3 animate-bounce" />
+                  <p className="text-slate-700 dark:text-slate-300 font-semibold text-lg">No alerts found</p>
+                  <p className="text-slate-505 text-sm max-w-sm mt-1">
+                    You do not have any notifications. Create a custom reminder or start studying to receive automated alerts!
+                  </p>
+                </div>
+              ) : (
+                <AnimatePresence initial={false}>
+                  {filteredNotifications.map((notification) => (
+                    <motion.div
+                      key={notification._id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className={`flex gap-4 p-4 rounded-2xl border transition-all ${
                         notification.read
-                          ? 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                          : 'hover:bg-indigo-100/50 dark:hover:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400'
+                          ? 'bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-850/60 opacity-75'
+                          : 'bg-white dark:bg-slate-900 border-indigo-100 dark:border-indigo-950 shadow-sm ring-1 ring-indigo-500/5'
                       }`}
-                      title={notification.read ? 'Mark as unread' : 'Mark as read'}
                     >
-                      {notification.read ? <Check className="w-4.5 h-4.5" /> : <CheckCheck className="w-4.5 h-4.5" />}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(notification._id)}
-                      className="p-2 rounded-lg hover:bg-rose-550/10 hover:text-rose-600 text-slate-400 dark:text-slate-550 transition-colors cursor-pointer"
-                      title="Delete alert"
-                    >
-                      <Trash2 className="w-4.5 h-4.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
-        </div>
+                      <div className={`p-3 rounded-xl flex-shrink-0 self-start ${getBgClass(notification.type)}`}>
+                        {getIcon(notification.type)}
+                      </div>
 
-        {/* Modal for Creating Custom Reminder */}
-        <AnimatePresence>
-          {isModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsModalOpen(false)}
-                className="absolute inset-0 bg-slate-900/60 dark:bg-black/85 backdrop-blur-xs"
-              />
+                      <div className="flex-grow min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className={`font-semibold text-sm sm:text-base truncate ${
+                            notification.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-905 dark:text-white'
+                          }`}>
+                            {notification.title}
+                          </h3>
+                          {!notification.read && (
+                            <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 self-center" />
+                          )}
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1 leading-relaxed">
+                          {notification.message}
+                        </p>
 
-              {/* Modal Container */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                transition={{ type: 'spring', duration: 0.35 }}
-                className="relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl w-full max-w-md p-6 overflow-hidden z-10 text-slate-900 dark:text-white"
-              >
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
-                    Add Custom Study Alert
-                  </h2>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-slate-450 dark:text-slate-500 font-medium">
+                          <span>
+                            Received: {new Date(notification.createdAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {notification.dueDate && (
+                            <span className="flex items-center gap-1 text-rose-500 dark:text-rose-450">
+                              <Calendar className="w-3.5 h-3.5" />
+                              Due: {new Date(notification.dueDate).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-1.5 self-center">
+                        <button
+                          onClick={() => handleMarkAsRead(notification._id, notification.read)}
+                          className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                            notification.read
+                              ? 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                              : 'hover:bg-indigo-100/50 dark:hover:bg-indigo-950/30 text-indigo-505 dark:text-indigo-400'
+                          }`}
+                          title={notification.read ? 'Mark as unread' : 'Mark as read'}
+                        >
+                          {notification.read ? <Check className="w-4.5 h-4.5" /> : <CheckCheck className="w-4.5 h-4.5" />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(notification._id)}
+                          className="p-2 rounded-lg hover:bg-rose-550/10 hover:text-rose-600 text-slate-400 dark:text-slate-550 transition-colors cursor-pointer"
+                          title="Delete alert"
+                        >
+                          <Trash2 className="w-4.5 h-4.5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Inline Creation Form Tab */
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl w-full max-w-xl mx-auto p-6 md:p-8"
+          >
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 dark:border-slate-800 mb-6">
+              <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                Add Custom Study Alert
+              </h2>
+            </div>
+
+            <form onSubmit={handleCreateReminder} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-650 dark:text-slate-400">
+                  Alert Category
+                </label>
+                <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => setType('exam')}
+                    className={`py-2.5 px-3 rounded-xl border font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      type === 'exam'
+                        ? 'border-rose-500 bg-rose-50/20 text-rose-600 dark:text-rose-450 dark:bg-rose-950/10'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
+                    }`}
                   >
-                    <X className="w-5 h-5" />
+                    <Calendar className="w-4 h-4" />
+                    Upcoming Exam
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setType('quiz')}
+                    className={`py-2.5 px-3 rounded-xl border font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      type === 'quiz'
+                        ? 'border-indigo-600 bg-indigo-50/20 text-indigo-650 dark:text-indigo-400 dark:bg-indigo-950/10'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Quiz Reminder
                   </button>
                 </div>
+              </div>
 
-                <form onSubmit={handleCreateReminder} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-650 dark:text-slate-400">
-                      Alert Category
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setType('exam')}
-                        className={`py-2 px-3 rounded-xl border font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          type === 'exam'
-                            ? 'border-rose-500 bg-rose-50/20 text-rose-600 dark:text-rose-450 dark:bg-rose-950/10'
-                            : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
-                        }`}
-                      >
-                        <Calendar className="w-4 h-4" />
-                        Upcoming Exam
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setType('quiz')}
-                        className={`py-2 px-3 rounded-xl border font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          type === 'quiz'
-                            ? 'border-indigo-600 bg-indigo-50/20 text-indigo-600 dark:text-indigo-400 dark:bg-indigo-950/10'
-                            : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
-                        }`}
-                      >
-                        <FileText className="w-4 h-4" />
-                        Quiz Reminder
-                      </button>
-                    </div>
-                  </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-655 dark:text-slate-400">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Physics Quiz 3 Preparation"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm text-slate-800 dark:text-white"
+                />
+              </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-655 dark:text-slate-400">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Physics Quiz 3 Preparation"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                    />
-                  </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-655 dark:text-slate-400">
+                  Description Message
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Enter detailed reminder text or tasks..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none text-slate-800 dark:text-white"
+                />
+              </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-655 dark:text-slate-400">
-                      Description Message
-                    </label>
-                    <textarea
-                      required
-                      rows={3}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Enter detailed reminder text or tasks..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
-                    />
-                  </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-655 dark:text-slate-400 flex items-center gap-1">
+                  Due Date & Time
+                  <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm text-slate-605 dark:text-slate-300"
+                />
+              </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-655 dark:text-slate-400 flex items-center gap-1">
-                      Due Date & Time
-                      <span className="text-xs text-slate-400 font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm text-slate-600 dark:text-slate-300"
-                    />
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3.5">
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="px-4.5 py-2.5 rounded-xl border border-slate-250 dark:border-slate-800 text-slate-705 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-5.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-md shadow-indigo-100 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                      Add to Board
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('list')}
+                  className="px-5 py-2.5 rounded-xl border border-slate-250 dark:border-slate-800 text-slate-700 dark:text-slate-450 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm shadow-md shadow-indigo-100 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Create Reminder
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
       </div>
     </Layout>
   );

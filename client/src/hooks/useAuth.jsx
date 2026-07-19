@@ -25,12 +25,16 @@ export function AuthProvider({ children }) {
       .catch(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('activeStudySessionId');
+        localStorage.removeItem('activeStudySessionData');
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const loginUser = (data) => {
+    localStorage.removeItem('activeStudySessionId');
+    localStorage.removeItem('activeStudySessionData');
     localStorage.setItem('token', data.token);
     const userData = {
       _id: data._id,
@@ -41,6 +45,7 @@ export function AuthProvider({ children }) {
       linkedin: data.linkedin,
       academicDetails: data.academicDetails,
       theme: data.theme,
+      photo: data.photo,
       notificationPreferences: data.notificationPreferences,
     };
     localStorage.setItem('user', JSON.stringify(userData));
@@ -50,6 +55,8 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('activeStudySessionId');
+    localStorage.removeItem('activeStudySessionData');
     setUser(null);
   };
 

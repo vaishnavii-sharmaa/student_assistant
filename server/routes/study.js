@@ -14,6 +14,7 @@ import {
   updateSessionNotes,
   summarizeCustomContent,
   saveCustomSummary,
+  saveMarkedLine,
 } from '../controllers/studyController.js';
 
 const router = Router();
@@ -29,6 +30,7 @@ router.get('/sessions/:id', getSession);
 router.patch('/sessions/:id/difficulty', updateDifficulty);
 router.patch('/sessions/:id/notes', updateSessionNotes);
 router.delete('/sessions/:id', deleteSession);
+router.post('/sessions/:id/mark', saveMarkedLine);
 router.post('/sessions/:id/chat', chat);
 router.post('/sessions/:id/quiz/generate', generateQuizForSession);
 router.post('/sessions/:id/quiz/submit', submitQuiz);

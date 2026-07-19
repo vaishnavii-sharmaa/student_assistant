@@ -27,10 +27,11 @@ export function isCodingTopic(topic) {
 
 export async function chat(messages, json = false) {
   const response = await getGroq().chat.completions.create({
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
     messages,
     ...(json ? { response_format: { type: 'json_object' } } : {}),
     temperature: 0.7,
+    max_tokens: 4096,
   });
   return response.choices[0].message.content;
 }

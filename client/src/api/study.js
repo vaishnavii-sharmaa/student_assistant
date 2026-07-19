@@ -17,4 +17,4 @@ export const updateSessionNotes = (sessionId, notes) =>
   api.patch(`/study/sessions/${sessionId}/notes`, { notes });
 export const summarizeCustomContent = (data) => api.post('/study/sessions/summarize', data);
 export const saveCustomSummary = (data) => api.post('/study/sessions/save-summary', data);
-
+export const saveMarkedLine = (sessionId, text) => api.post(`/study/sessions/${sessionId}/mark`, { text });

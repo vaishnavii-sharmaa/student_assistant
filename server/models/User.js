@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
+    password: { type: String, minlength: 6, default: null },
+    googleId: { type: String, default: '' },
     studyDates: [{ type: Date }],
     address: { type: String, default: '' },
     github: { type: String, default: '' },
@@ -17,6 +18,7 @@ const userSchema = new mongoose.Schema(
       gpa: { type: String, default: '' }
     },
     theme: { type: String, default: 'dark' },
+    photo: { type: String, default: '' },
     notificationPreferences: {
       quizReminders: { type: Boolean, default: true },
       upcomingExams: { type: Boolean, default: true },
@@ -27,11 +29,12 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+  if (!this.isModified('password') || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
 userSchema.methods.comparePassword = async function (candidate) {
+  if (!this.password) return false;
   return bcrypt.compare(candidate, this.password);
 };
 
